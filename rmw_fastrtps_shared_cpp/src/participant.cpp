@@ -17,6 +17,9 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
+#include <functional>
+#include <utility>
 
 #include "fastdds/dds/core/status/StatusMask.hpp"
 #include "fastdds/dds/domain/DomainParticipantFactory.hpp"
@@ -33,6 +36,7 @@
 #include "fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h"
 
 #include "rcpputils/scope_exit.hpp"
+#include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/env.h"
 #include "rcutils/filesystem.h"
 
@@ -140,6 +144,113 @@ __create_participant(
   return participant_info;
 }
 
+// Processor for security attributes with FILE URI
+bool process_file_uri_security_file(
+    const std::string & prefix, const rcpputils::fs::path & full_path,
+    std::string & result)
+{
+    if (!full_path.is_regular_file()) {
+      return false;
+    }
+    result = prefix + full_path.string();
+    return true;
+}
+
+// Processor for security attributes with PKCS#11 URI
+bool process_pkcs_uri_security_file(
+    const std::string & /*prefix*/, const rcpputils::fs::path & full_path,
+    std::string & result)
+{
+    const std::string p11_prefix("pkcs11:");
+
+    std::ifstream ifs(full_path.string());
+    if (!ifs.is_open()) {
+      return false;
+    }
+
+    if (!(ifs >> result)) {
+      return false;
+    }
+    if (result.find(p11_prefix) != 0) {
+      return false;
+    }
+
+    return true;
+}
+
+bool get_security_files(
+  const std::string & prefix, const std::string & secure_root,
+  std::unordered_map<std::string, std::string> & result)
+{
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  using std::placeholders::_3;
+  using security_file_processor = std::function<bool(const std::string &, const rcpputils::fs::path &, std::string &)>;
+
+  // Key: the security attribute
+  // Value: ordered sequence of pairs. Each pair contains one possible file name for the attribute and the corresponding processor method
+  // Pairs are ordered by priority: the first one matching is used.
+  const std::unordered_map<std::string, std::vector<std::pair<std::string, security_file_processor>>> required_files{
+    {"IDENTITY_CA", {
+        {"identity_ca.cert.pem", std::bind(process_file_uri_security_file, _1, _2, _3)},
+        {"identity_ca.cert.p11", bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"CERTIFICATE", {
+        {"cert.pem", bind(process_file_uri_security_file, _1, _2, _3)},
+        {"cert.p11", bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"PRIVATE_KEY", {
+        {"key.pem", bind(process_file_uri_security_file, _1, _2, _3)},
+        {"key.p11", bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"PERMISSIONS_CA", {
+        {"permissions_ca.cert.pem", bind(process_file_uri_security_file, _1, _2, _3)},
+        {"permissions_ca.cert.p11", bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"GOVERNANCE", {
+        {"governance.p7s", bind(process_file_uri_security_file, _1, _2, _3)}}},
+    {"PERMISSIONS", {
+        {"permissions.p7s", bind(process_file_uri_security_file, _1, _2, _3)}}},
+  };
+
+  const std::unordered_map<std::string, std::vector<std::pair<std::string, security_file_processor>>> optional_files{
+    {"CRL", {
+        {"crl.pem",  bind(process_file_uri_security_file, _1, _2, _3)}}}
+  };
+
+  for (const std::pair<const std::string, std::vector<std::pair<std::string, security_file_processor>>> & el : required_files) {
+    std::string attribute_value;
+    bool processed = false;
+    for (auto & proc : el.second) {
+      rcpputils::fs::path full_path(secure_root);
+      full_path /= proc.first;
+      if (proc.second(prefix, full_path, attribute_value)) {
+        processed = true;
+        break;
+      }
+    }
+    if (!processed) {
+      result.clear();
+      return false;
+    }
+    result[el.first] = attribute_value;
+  }
+
+  for (const std::pair<const std::string, std::vector<std::pair<std::string, security_file_processor>>> & el : optional_files) {
+    std::string attribute_value;
+    bool processed = false;
+    for (auto & proc : el.second) {
+      rcpputils::fs::path full_path(secure_root);
+      full_path /= proc.first;
+      if (proc.second(prefix, full_path, attribute_value)) {
+        processed = true;
+        break;
+      }
+    }
+    if (processed) {
+      result[el.first] = attribute_value;
+    }
+  }
+
+  return true;
+}
+
 CustomParticipantInfo *
 rmw_fastrtps_shared_cpp::create_participant(
   const char * identifier,
@@ -231,7 +342,7 @@ rmw_fastrtps_shared_cpp::create_participant(
     // if security_root_path provided, try to find the key and certificate files
 #if HAVE_SECURITY
     std::unordered_map<std::string, std::string> security_files_paths;
-    if (rmw_dds_common::get_security_files(
+    if (get_security_files(
         "file://", security_options->security_root_path, security_files_paths))
     {
       eprosima::fastrtps::rtps::PropertyPolicy property_policy;
