@@ -28,6 +28,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wthread-safety)
 endif()
+add_compile_options(-DSECURITY=ON)
 
 if(SECURITY)
   find_package(OpenSSL REQUIRED)
