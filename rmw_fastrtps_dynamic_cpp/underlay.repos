@@ -10,7 +10,7 @@ repositories:
   fastrtps:
     type: git
     url: https://github.com/tiiuae/Fast-DDS.git
-    version: v2.5.1
+    version: tii_backport_2853
   rosidl_typesupport_fastrtps:
     type: git
     url: https://github.com/tiiuae/rosidl_typesupport_fastrtps.git
@@ -18,4 +18,4 @@ repositories:
   rmw_fastrtps:
     type: git
     url: https://github.com/tiiuae/rmw_fastrtps.git
-    version: feature/pkcs11_support-galactic
+    version: tii_build_upgrade_5.0.2
