@@ -10,7 +10,7 @@ repositories:
   fastrtps:
     type: git
     url: https://github.com/tiiuae/Fast-DDS.git
-    version: tii_backport_2853
+    version: tii_build_2_6_2
   rosidl_typesupport_fastrtps:
     type: git
     url: https://github.com/tiiuae/rosidl_typesupport_fastrtps.git
