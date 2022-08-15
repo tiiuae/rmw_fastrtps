@@ -6,7 +6,7 @@ repositories:
   fastcdr:
     type: git
     url: https://github.com/tiiuae/Fast-CDR.git
-    version: tii_build_scripts_v1.0.23
+    version: tii_build_v1.0.24
   fastrtps:
     type: git
     url: https://github.com/tiiuae/Fast-DDS.git

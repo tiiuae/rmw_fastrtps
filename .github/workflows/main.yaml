@@ -2,7 +2,7 @@ name: main
 
 on:
   push:
-    branches: [ tii_build_scripts_pkcs11_support-galactic ]
+    branches: [ tii_build_upgrade_5.0.2 ]
 
 jobs:
   tii-deb-build:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: rmw_fastrtps
-          ref: tii_build_scripts_pkcs11_support-galactic
+          ref: tii_build_upgrade_5.0.2
 
       # Run docker build
       - name: Run rmw_fastrtps_cpp docker build

@@ -1,10 +1,10 @@
 fastcdr:
-    ubuntu: ros-ROS_DISTRO-fastcdr=1.0.23*
+    ubuntu: ros-ROS_DISTRO-fastcdr=1.0.24*
 fastrtps:
-    ubuntu: ros-ROS_DISTRO-fastrtps=2.5.1*
+    ubuntu: ros-ROS_DISTRO-fastrtps=2.6.2*
 fastrtps_cmake_module:
-    ubuntu: ros-ROS_DISTRO-fastrtps-cmake-module=2.0.4*
+    ubuntu: ros-ROS_DISTRO-fastrtps-cmake-module=1.2.1*
 rosidl_typesupport_fastrtps_c:
-    ubuntu: ros-ROS_DISTRO-rosidl-typesupport-fastrtps-c=2.0.4*
+    ubuntu: ros-ROS_DISTRO-rosidl-typesupport-fastrtps-c=1.2.1*
 rosidl_typesupport_fastrtps_cpp:
-    ubuntu: ros-ROS_DISTRO-rosidl-typesupport-fastrtps-cpp=2.0.4*
+    ubuntu: ros-ROS_DISTRO-rosidl-typesupport-fastrtps-cpp=1.2.1*
