@@ -10,7 +10,7 @@ repositories:
   fastrtps:
     type: git
     url: https://github.com/tiiuae/Fast-DDS.git
-    version: v2.5.1
+    version: v2.5.1-deadlock-fix
   rosidl_typesupport_fastrtps:
     type: git
     url: https://github.com/tiiuae/rosidl_typesupport_fastrtps.git
